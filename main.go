@@ -7,15 +7,23 @@ import (
 
 func main() {
 	// Регистрация ботов
-	bot1, err := register_bot.NewBot("BOT1_TOKEN", func(username string) {
-		GetUser(username)
+	// Для примера t.me/pls_bot1_bot
+	// вторым аргументом можно передать nil, если пользователя не надо обрабатывать
+	bot1, err := register_bot.NewBot("6935692579:AAGZY_RlQceD72lX678YO2FqkLOSig52oLc", func(username string) bool {
+		// если будет возвращаться false, то ручка под BasicAuth не отработает, а ручка под RegisterRegisterCommand отработает всегда
+		success := GetUser(username)
+		return success
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	bot2, err := register_bot.NewBot("BOT2_TOKEN", func(username string) {
-		GetUser(username)
+	// Для примера t.me/pls_bot2_bot
+	// вторым аргументом можно передать nil, если пользователя не надо обрабатывать
+	bot2, err := register_bot.NewBot("6701968897:AAGLsTyMDBHV_gf5sFxE1XOTXPSBP8kY0Ow", func(username string) bool {
+		success := GetUser(username)
+		// если будет возвращаться false, то ручка под BasicAuth не отработает, а ручка под RegisterRegisterCommand отработает всегда
+		return success
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -23,7 +31,15 @@ func main() {
 
 	// Регистрация хендлеров
 	bot1.RegisterTextCommand("text1", handleTextCommand1)
+	bot1.RegisterTextCommand("test", handleTextCommand1)
 	bot2.RegisterTextCommand("text2", handleTextCommand2)
+
+	// под BasicAuth ручка не отработает, если GetUser вернет false
+	bot1.BasicAuth("text1")
+
+	// под RegisterRegisterCommand ручка отработает всегда
+	bot1.RegisterRegisterCommand("reg")
+	bot2.RegisterRegisterCommand("text2")
 
 	// Установка приватности для хендлера
 	bot1.SetPrivateCommand("text1")
@@ -46,6 +62,10 @@ func handleTextCommand2() string {
 	return "Это текстовый ответ на команду для бота 2."
 }
 
-func GetUser(username string) {
+func GetUser(username string) bool {
 	// обработка юзернейма после register
+	log.Println(username)
+
+	// Добавь логику и верни true, если успешно
+	return false
 }

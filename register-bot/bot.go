@@ -7,34 +7,46 @@ import (
 )
 
 type Bot struct {
-	Token            string
-	bot              *tgbotapi.BotAPI
-	commandHandlers  map[string]func() string
-	privateCommands  map[string]struct{}
-	allowedUsernames map[string]struct{}
-	mu               sync.RWMutex
-	onRegisterUser   func(username string) // Функция, которая будет вызываться при регистрации пользователя
+	Token                   string
+	bot                     *tgbotapi.BotAPI
+	commandHandlers         map[string]func() string
+	registerBasicAuth       map[string]int
+	registerRegisterCommand map[string]int
+	privateCommands         map[string]struct{}
+	allowedUsernames        map[string]struct{}
+	mu                      sync.RWMutex
+	onRegisterUser          func(username string) bool // Функция, которая будет вызываться при регистрации пользователя
 }
 
-func NewBot(token string, onRegisterUser func(username string)) (*Bot, error) {
+func NewBot(token string, onRegisterUser func(username string) bool) (*Bot, error) {
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Bot{
-		Token:            token,
-		bot:              bot,
-		commandHandlers:  make(map[string]func() string),
-		privateCommands:  make(map[string]struct{}),
-		allowedUsernames: make(map[string]struct{}),
-		mu:               sync.RWMutex{},
-		onRegisterUser:   onRegisterUser, // Устанавливаем функцию обратного вызова
+		Token:                   token,
+		bot:                     bot,
+		commandHandlers:         make(map[string]func() string),
+		registerBasicAuth:       make(map[string]int),
+		registerRegisterCommand: make(map[string]int),
+		privateCommands:         make(map[string]struct{}),
+		allowedUsernames:        make(map[string]struct{}),
+		mu:                      sync.RWMutex{},
+		onRegisterUser:          onRegisterUser, // Устанавливаем функцию обратного вызова
 	}, nil
 }
 
 func (b *Bot) RegisterTextCommand(command string, handler func() string) {
 	b.commandHandlers[command] = handler
+}
+
+func (b *Bot) BasicAuth(command string) {
+	b.registerBasicAuth[command] = 1
+}
+
+func (b *Bot) RegisterRegisterCommand(command string) {
+	b.registerRegisterCommand[command] = 1
 }
 
 func (b *Bot) SetPrivateCommand(command string) {
@@ -66,20 +78,35 @@ func (b *Bot) Start() {
 		if update.Message.IsCommand() {
 			command := update.Message.Command()
 			handler, ok := b.commandHandlers[command]
-			if ok {
+
+			// Флаг, чтобы определить, было ли выполнено действие после if b.registerCommandHandlers[command] == 1
+			actionPerformed := true
+
+			if b.registerBasicAuth[command] == 1 {
+				// Получаем юзернейм
+				username := update.Message.From.UserName
+				// Вызываем функцию обратного вызова при регистрации пользователя
+				if b.onRegisterUser != nil {
+					// если функция обратного вызова вернула false, то handler не отработает
+					if !b.onRegisterUser(username) {
+						actionPerformed = false
+					}
+				}
+			}
+
+			if b.registerRegisterCommand[command] == 1 {
+				// Получаем юзернейм
+				username := update.Message.From.UserName
+				// Вызываем функцию обратного вызова при регистрации пользователя
+				if b.onRegisterUser != nil {
+					b.onRegisterUser(username)
+				}
+			}
+
+			if ok && actionPerformed {
 				if b.isPrivateCommand(command) && !b.isAllowedUser(update.Message.From.UserName) {
 					// Команда приватна и пользователь не в списке разрешенных
 					continue
-				}
-
-				if command == "register" {
-					// Получаем юзернейм
-					username := update.Message.From.UserName
-
-					// Вызываем функцию обратного вызова при регистрации пользователя
-					if b.onRegisterUser != nil {
-						b.onRegisterUser(username)
-					}
 				}
 
 				messageText := handler()
