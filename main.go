@@ -29,6 +29,7 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Ручки //////////////////////////////////////////////////////////////////
 	// Регистрация хендлеров
 	bot1.RegisterTextCommand("text1", handleTextCommand1)
 	bot1.RegisterTextCommand("test", handleTextCommand1)
@@ -46,6 +47,17 @@ func main() {
 
 	// Установка пользователя с правами на приватные методы
 	bot1.AllowUser("ZnalZnalZnal")
+	////////////////////////////////////////////////////////////////////////////
+
+	// Кнопки //////////////////////////////////////////////////////////////////
+	bot1.RegisterButton("Кнопка 1", "button1", handleButton1)
+	bot2.RegisterButton("Кнопка 2", "button2", handleButton2)
+
+	// под RegisterRegisterCommand ручка отработает всегда
+	bot1.RegisterRegisterCommand("Кнопка 1")
+	// под BasicAuth ручка не отработает, если GetUser вернет false
+	bot2.BasicAuth("Кнопка 2")
+	////////////////////////////////////////////////////////////////////////////
 
 	// Старт бота 1 и бота 2
 	go bot1.Start()
@@ -67,5 +79,13 @@ func GetUser(username string) bool {
 	log.Println(username)
 
 	// Добавь логику и верни true, если успешно
-	return false
+	return true
+}
+
+func handleButton1() string {
+	return "Кнопка 1 была нажата."
+}
+
+func handleButton2() string {
+	return "Кнопка 2 была нажата."
 }

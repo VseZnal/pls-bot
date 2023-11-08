@@ -12,6 +12,7 @@ type Bot struct {
 	commandHandlers         map[string]func() string
 	registerBasicAuth       map[string]int
 	registerRegisterCommand map[string]int
+	buttons                 map[string]func() string
 	privateCommands         map[string]struct{}
 	allowedUsernames        map[string]struct{}
 	mu                      sync.RWMutex
@@ -34,34 +35,12 @@ func NewBot(token string, onRegisterUser func(username string) bool) (*Bot, erro
 		allowedUsernames:        make(map[string]struct{}),
 		mu:                      sync.RWMutex{},
 		onRegisterUser:          onRegisterUser, // Устанавливаем функцию обратного вызова
+		buttons:                 make(map[string]func() string),
 	}, nil
 }
 
-func (b *Bot) RegisterTextCommand(command string, handler func() string) {
-	b.commandHandlers[command] = handler
-}
-
-func (b *Bot) BasicAuth(command string) {
-	b.registerBasicAuth[command] = 1
-}
-
-func (b *Bot) RegisterRegisterCommand(command string) {
-	b.registerRegisterCommand[command] = 1
-}
-
-func (b *Bot) SetPrivateCommand(command string) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	b.privateCommands[command] = struct{}{}
-}
-
-func (b *Bot) AllowUser(username string) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	b.allowedUsernames[username] = struct{}{}
-}
-
 func (b *Bot) Start() {
+
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
@@ -75,46 +54,91 @@ func (b *Bot) Start() {
 			continue
 		}
 
-		if update.Message.IsCommand() {
-			command := update.Message.Command()
-			handler, ok := b.commandHandlers[command]
+		sendKeyboard(b, update.Message.Chat.ID)
 
-			// Флаг, чтобы определить, было ли выполнено действие после if b.registerCommandHandlers[command] == 1
-			actionPerformed := true
+		if update.Message != nil {
+			if update.Message.IsCommand() {
+				command := update.Message.Command()
+				handler, ok := b.commandHandlers[command]
 
-			if b.registerBasicAuth[command] == 1 {
-				// Получаем юзернейм
-				username := update.Message.From.UserName
-				// Вызываем функцию обратного вызова при регистрации пользователя
-				if b.onRegisterUser != nil {
-					// если функция обратного вызова вернула false, то handler не отработает
-					if !b.onRegisterUser(username) {
-						actionPerformed = false
+				// Флаг, чтобы определить, было ли выполнено действие после if b.registerCommandHandlers[command] == 1
+				actionPerformed := true
+
+				if b.registerBasicAuth[command] == 1 {
+					// Получаем юзернейм
+					username := update.Message.From.UserName
+					// Вызываем функцию обратного вызова при регистрации пользователя
+					if b.onRegisterUser != nil {
+						// если функция обратного вызова вернула false, то handler не отработает
+						if !b.onRegisterUser(username) {
+							actionPerformed = false
+						}
 					}
 				}
-			}
 
-			if b.registerRegisterCommand[command] == 1 {
-				// Получаем юзернейм
-				username := update.Message.From.UserName
-				// Вызываем функцию обратного вызова при регистрации пользователя
-				if b.onRegisterUser != nil {
-					b.onRegisterUser(username)
-				}
-			}
-
-			if ok && actionPerformed {
-				if b.isPrivateCommand(command) && !b.isAllowedUser(update.Message.From.UserName) {
-					// Команда приватна и пользователь не в списке разрешенных
-					continue
+				if b.registerRegisterCommand[command] == 1 {
+					// Получаем юзернейм
+					username := update.Message.From.UserName
+					// Вызываем функцию обратного вызова при регистрации пользователя
+					if b.onRegisterUser != nil {
+						b.onRegisterUser(username)
+					}
 				}
 
-				messageText := handler()
-				if messageText != "" {
-					response := tgbotapi.NewMessage(update.Message.Chat.ID, messageText)
-					_, err := b.bot.Send(response)
-					if err != nil {
-						log.Println("Ошибка при отправке сообщения:", err)
+				if ok && actionPerformed {
+					if b.isPrivateCommand(command) && !b.isAllowedUser(update.Message.From.UserName) {
+						// Команда приватна и пользователь не в списке разрешенных
+						continue
+					}
+
+					messageText := handler()
+					if messageText != "" {
+						response := tgbotapi.NewMessage(update.Message.Chat.ID, messageText)
+						_, err := b.bot.Send(response)
+						if err != nil {
+							log.Println("Ошибка при отправке сообщения:", err)
+						}
+					}
+				}
+			} else {
+				buttonName := update.Message.Text
+
+				// Флаг, чтобы определить, было ли выполнено действие после if b.registerCommandHandlers[command] == 1
+				actionPerformed := true
+				if b.registerBasicAuth[buttonName] == 1 {
+					// Получаем юзернейм
+					username := update.Message.From.UserName
+					// Вызываем функцию обратного вызова при регистрации пользователя
+					if b.onRegisterUser != nil {
+						// если функция обратного вызова вернула false, то handler не отработает
+						if !b.onRegisterUser(username) {
+							actionPerformed = false
+						}
+					}
+				}
+
+				if b.registerRegisterCommand[buttonName] == 1 {
+					// Получаем юзернейм
+					username := update.Message.From.UserName
+					// Вызываем функцию обратного вызова при регистрации пользователя
+					if b.onRegisterUser != nil {
+						b.onRegisterUser(username)
+					}
+				}
+
+				handler, buttonExists := b.buttons[buttonName]
+
+				if buttonExists && actionPerformed {
+					//handler, buttonExists := b.buttons[buttonName]
+					if buttonExists {
+						messageText := handler()
+						if messageText != "" {
+							response := tgbotapi.NewMessage(update.Message.Chat.ID, messageText)
+							_, err := b.bot.Send(response)
+							if err != nil {
+								log.Println("Ошибка при отправке сообщения:", err)
+							}
+						}
 					}
 				}
 			}
@@ -122,16 +146,34 @@ func (b *Bot) Start() {
 	}
 }
 
-func (b *Bot) isPrivateCommand(command string) bool {
-	b.mu.RLock()
-	defer b.mu.RUnlock()
-	_, isPrivate := b.privateCommands[command]
-	return isPrivate
+func (b *Bot) RegisterButton(buttonText string, command string, handler func() string) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	b.buttons[buttonText] = handler
+
+	if handler != nil {
+		b.commandHandlers[command] = handler
+	}
 }
 
-func (b *Bot) isAllowedUser(username string) bool {
-	b.mu.RLock()
-	defer b.mu.RUnlock()
-	_, allowed := b.allowedUsernames[username]
-	return allowed
+func sendKeyboard(bot *Bot, chatID int64) {
+	// Создайте клавиатуру с кнопками на основе зарегистрированных кнопок
+	msg := tgbotapi.NewMessage(chatID, "123")
+
+	if len(bot.buttons) > 0 {
+		var keyboardRows [][]tgbotapi.KeyboardButton
+		for buttonText := range bot.buttons {
+			keyboardRows = append(keyboardRows, []tgbotapi.KeyboardButton{tgbotapi.NewKeyboardButton(buttonText)})
+		}
+
+		keyboard := tgbotapi.NewReplyKeyboard(keyboardRows...)
+		msg.ReplyMarkup = keyboard
+	}
+
+	// сообщение с клавиатурой
+	_, err := bot.bot.Send(msg)
+	if err != nil {
+		log.Println("Ошибка при отправке сообщения:", err)
+	}
 }
