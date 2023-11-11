@@ -1,7 +1,12 @@
 package register_bot
 
-func (b *Bot) RegisterTextCommand(command string, handler func() string) {
-	b.commandHandlers[command] = handler
+func (b *Bot) RegisterTextCommand(command string, textHandlers ...func() string) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	b.commandHandlers[command] = CommandHandlers{
+		TextHandlers: textHandlers,
+	}
 }
 
 func (b *Bot) BasicAuth(command string) {

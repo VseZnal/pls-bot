@@ -31,7 +31,7 @@ func main() {
 
 	// Ручки //////////////////////////////////////////////////////////////////
 	// Регистрация хендлеров
-	bot1.RegisterTextCommand("text1", handleTextCommand1)
+	bot1.RegisterTextCommand("text1", handleTextCommand1, handleTextCommand12, handleTextCommand13)
 	bot1.RegisterTextCommand("test", handleTextCommand1)
 	bot2.RegisterTextCommand("text2", handleTextCommand2)
 
@@ -50,7 +50,7 @@ func main() {
 	////////////////////////////////////////////////////////////////////////////
 
 	// Кнопки //////////////////////////////////////////////////////////////////
-	bot1.RegisterButton("Кнопка 1", "button1", handleButton1)
+	bot1.RegisterButton("Кнопка 1", "button1", handleButton1, handleButton12)
 	bot2.RegisterButton("Кнопка 2", "button2", handleButton2)
 
 	// под RegisterRegisterCommand ручка отработает всегда
@@ -70,6 +70,14 @@ func handleTextCommand1() string {
 	return "Это текстовый ответ на команду для бота 1."
 }
 
+func handleTextCommand12() string {
+	return "Это текстовый ответ на команду для бота 12."
+}
+
+func handleTextCommand13() string {
+	return "Это текстовый ответ на команду для бота 13."
+}
+
 func handleTextCommand2() string {
 	return "Это текстовый ответ на команду для бота 2."
 }
@@ -84,6 +92,10 @@ func GetUser(username string) bool {
 
 func handleButton1() string {
 	return "Кнопка 1 была нажата."
+}
+
+func handleButton12() string {
+	return "Кнопка 12 была нажата."
 }
 
 func handleButton2() string {

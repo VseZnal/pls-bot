@@ -9,14 +9,19 @@ import (
 type Bot struct {
 	Token                   string
 	bot                     *tgbotapi.BotAPI
-	commandHandlers         map[string]func() string
+	commandHandlers         map[string]CommandHandlers
 	registerBasicAuth       map[string]int
 	registerRegisterCommand map[string]int
-	buttons                 map[string]func() string
+	buttons                 map[string]CommandHandlers
 	privateCommands         map[string]struct{}
 	allowedUsernames        map[string]struct{}
 	mu                      sync.RWMutex
 	onRegisterUser          func(username string) bool // Функция, которая будет вызываться при регистрации пользователя
+}
+
+type CommandHandlers struct {
+	TextHandlers  []func() string
+	ImageHandlers []func() tgbotapi.Chattable
 }
 
 func NewBot(token string, onRegisterUser func(username string) bool) (*Bot, error) {
@@ -28,14 +33,14 @@ func NewBot(token string, onRegisterUser func(username string) bool) (*Bot, erro
 	return &Bot{
 		Token:                   token,
 		bot:                     bot,
-		commandHandlers:         make(map[string]func() string),
+		commandHandlers:         make(map[string]CommandHandlers),
 		registerBasicAuth:       make(map[string]int),
 		registerRegisterCommand: make(map[string]int),
 		privateCommands:         make(map[string]struct{}),
 		allowedUsernames:        make(map[string]struct{}),
 		mu:                      sync.RWMutex{},
 		onRegisterUser:          onRegisterUser, // Устанавливаем функцию обратного вызова
-		buttons:                 make(map[string]func() string),
+		buttons:                 make(map[string]CommandHandlers),
 	}, nil
 }
 
@@ -53,13 +58,12 @@ func (b *Bot) Start() {
 		if update.Message == nil {
 			continue
 		}
-
 		sendKeyboard(b, update.Message.Chat.ID)
 
 		if update.Message != nil {
 			if update.Message.IsCommand() {
 				command := update.Message.Command()
-				handler, ok := b.commandHandlers[command]
+				handlers, ok := b.commandHandlers[command]
 
 				// Флаг, чтобы определить, было ли выполнено действие после if b.registerCommandHandlers[command] == 1
 				actionPerformed := true
@@ -91,12 +95,14 @@ func (b *Bot) Start() {
 						continue
 					}
 
-					messageText := handler()
-					if messageText != "" {
-						response := tgbotapi.NewMessage(update.Message.Chat.ID, messageText)
-						_, err := b.bot.Send(response)
-						if err != nil {
-							log.Println("Ошибка при отправке сообщения:", err)
+					for _, textHandler := range handlers.TextHandlers {
+						messageText := textHandler()
+						if messageText != "" {
+							response := tgbotapi.NewMessage(update.Message.Chat.ID, messageText)
+							_, err := b.bot.Send(response)
+							if err != nil {
+								log.Println("Ошибка при отправке сообщения:", err)
+							}
 						}
 					}
 				}
@@ -104,7 +110,7 @@ func (b *Bot) Start() {
 				buttonName := update.Message.Text
 
 				// Флаг, чтобы определить, было ли выполнено действие после if b.registerCommandHandlers[command] == 1
-				actionPerformed := true
+				actionPerformedB := true
 				if b.registerBasicAuth[buttonName] == 1 {
 					// Получаем юзернейм
 					username := update.Message.From.UserName
@@ -112,7 +118,7 @@ func (b *Bot) Start() {
 					if b.onRegisterUser != nil {
 						// если функция обратного вызова вернула false, то handler не отработает
 						if !b.onRegisterUser(username) {
-							actionPerformed = false
+							actionPerformedB = false
 						}
 					}
 				}
@@ -126,12 +132,11 @@ func (b *Bot) Start() {
 					}
 				}
 
-				handler, buttonExists := b.buttons[buttonName]
+				handlersB, buttonExists := b.buttons[buttonName]
 
-				if buttonExists && actionPerformed {
-					//handler, buttonExists := b.buttons[buttonName]
-					if buttonExists {
-						messageText := handler()
+				if buttonExists && actionPerformedB {
+					for _, textHandler := range handlersB.TextHandlers {
+						messageText := textHandler()
 						if messageText != "" {
 							response := tgbotapi.NewMessage(update.Message.Chat.ID, messageText)
 							_, err := b.bot.Send(response)

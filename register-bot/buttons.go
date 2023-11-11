@@ -5,14 +5,18 @@ import (
 	"log"
 )
 
-func (b *Bot) RegisterButton(buttonText string, command string, handler func() string) {
+func (b *Bot) RegisterButton(buttonText string, command string, handler ...func() string) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	b.buttons[buttonText] = handler
+	b.buttons[buttonText] = CommandHandlers{
+		TextHandlers: handler,
+	}
 
 	if handler != nil {
-		b.commandHandlers[command] = handler
+		b.commandHandlers[command] = CommandHandlers{
+			TextHandlers: handler,
+		}
 	}
 }
 
