@@ -1,7 +1,7 @@
 package main
 
 import (
-	register_bot "github.com/VseZnal/pls-bot-bot/register-bot"
+	register_bot "github.com/VseZnal/pls-bot/register-bot"
 	"io/ioutil"
 	"log"
 )

@@ -1,4 +1,4 @@
-module github.com/VseZnal/pls-bot-bot
+module github.com/VseZnal/pls-bot
 
 go 1.20
 
