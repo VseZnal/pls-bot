@@ -9,6 +9,26 @@ func (b *Bot) RegisterTextCommand(command string, textHandlers ...func() string)
 	}
 }
 
+// Регистрация команды для обработки изображения по пути файла
+func (b *Bot) RegisterImagePathCommand(command string, imageHandlers ...func() string) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	b.commandHandlers[command] = CommandHandlers{
+		ImagePath: imageHandlers,
+	}
+}
+
+// Регистрация команды для обработки изображения в виде байтов
+func (b *Bot) RegisterImageBytesCommand(command string, imageHandlers ...func() []byte) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	b.commandHandlers[command] = CommandHandlers{
+		ImageBytes: imageHandlers,
+	}
+}
+
 func (b *Bot) BasicAuth(command string) {
 	b.registerBasicAuth[command] = 1
 }

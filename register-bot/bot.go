@@ -21,8 +21,9 @@ type Bot struct {
 }
 
 type CommandHandlers struct {
-	TextHandlers  []func() string
-	ImageHandlers []func() tgbotapi.Chattable
+	TextHandlers []func() string
+	ImagePath    []func() string // Для путей к изображениям
+	ImageBytes   []func() []byte // Для байтов изображений
 }
 
 func NewBot(gWorkers int, token string, onRegisterUser func(username string) bool) (*Bot, error) {
@@ -47,7 +48,6 @@ func NewBot(gWorkers int, token string, onRegisterUser func(username string) boo
 }
 
 func (b *Bot) Start() {
-	const workers = 10 // Количество горутин в пуле
 	var wg sync.WaitGroup
 	jobs := make(chan tgbotapi.Update)
 
@@ -128,6 +128,33 @@ func (b *Bot) processUpdate(update tgbotapi.Update) {
 					}
 				}
 			}
+			// Обработка изображений в байтах
+			if len(handlers.ImageBytes) > 0 {
+				for _, imageHandler := range handlers.ImageBytes {
+					imageData := imageHandler()
+
+					// Здесь отправка изображения через бота
+					chatID := update.Message.Chat.ID
+					err := b.SendImageFromBytes(chatID, imageData, "Caption")
+					if err != nil {
+						log.Println("Ошибка при отправке изображения:", err)
+					}
+				}
+			}
+
+			// Обработка изображений по пути к файлу
+			if len(handlers.ImagePath) > 0 {
+				for _, pathHandler := range handlers.ImagePath {
+					imagePath := pathHandler()
+
+					// Здесь отправка изображения через бота по пути к файлу
+					chatID := update.Message.Chat.ID
+					err := b.SendImage(chatID, imagePath, "Caption")
+					if err != nil {
+						log.Println("Ошибка при отправке изображения:", err)
+					}
+				}
+			}
 		}
 	} else {
 		buttonName := update.Message.Text
@@ -165,6 +192,33 @@ func (b *Bot) processUpdate(update tgbotapi.Update) {
 					_, err := b.bot.Send(response)
 					if err != nil {
 						log.Println("Ошибка при отправке сообщения:", err)
+					}
+				}
+			}
+			// Обработка изображений в байтах
+			if len(handlersB.ImageBytes) > 0 {
+				for _, imageHandler := range handlersB.ImageBytes {
+					imageData := imageHandler()
+
+					// Здесь отправка изображения через бота
+					chatID := update.Message.Chat.ID
+					err := b.SendImageFromBytes(chatID, imageData, "Caption")
+					if err != nil {
+						log.Println("Ошибка при отправке изображения:", err)
+					}
+				}
+			}
+
+			// Обработка изображений по пути к файлу
+			if len(handlersB.ImagePath) > 0 {
+				for _, pathHandler := range handlersB.ImagePath {
+					imagePath := pathHandler()
+
+					// Здесь отправка изображения через бота по пути к файлу
+					chatID := update.Message.Chat.ID
+					err := b.SendImage(chatID, imagePath, "Caption")
+					if err != nil {
+						log.Println("Ошибка при отправке изображения:", err)
 					}
 				}
 			}

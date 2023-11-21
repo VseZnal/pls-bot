@@ -20,6 +20,36 @@ func (b *Bot) RegisterButton(buttonText string, command string, handler ...func(
 	}
 }
 
+func (b *Bot) RegisterButtonImagePathCommand(buttonText string, command string, handler ...func() string) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	b.buttons[buttonText] = CommandHandlers{
+		ImagePath: handler,
+	}
+
+	if handler != nil {
+		b.commandHandlers[command] = CommandHandlers{
+			ImagePath: handler,
+		}
+	}
+}
+
+func (b *Bot) RegisterButtonImageBytesCommand(buttonText string, command string, handler ...func() []byte) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	b.buttons[buttonText] = CommandHandlers{
+		ImageBytes: handler,
+	}
+
+	if handler != nil {
+		b.commandHandlers[command] = CommandHandlers{
+			ImageBytes: handler,
+		}
+	}
+}
+
 func sendKeyboard(bot *Bot, chatID int64) {
 	// Создайте клавиатуру с кнопками на основе зарегистрированных кнопок
 	msg := tgbotapi.NewMessage(chatID, "123")

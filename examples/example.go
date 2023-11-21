@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io/ioutil"
 	"log"
 	register_bot "pls-bot/register-bot"
 )
@@ -31,7 +32,9 @@ func main() {
 		log.Fatal(err)
 	}
 
+	////////////////////////////////////////////////////////////////////////////
 	// Ручки //////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
 	// Регистрация хендлеров
 	bot1.RegisterTextCommand("text1", handleTextCommand1, handleTextCommand12, handleTextCommand13)
 	bot1.RegisterTextCommand("test", handleTextCommand1)
@@ -49,9 +52,16 @@ func main() {
 
 	// Установка пользователя с правами на приватные методы
 	bot1.AllowUser("ZnalZnalZnal")
-	////////////////////////////////////////////////////////////////////////////
 
+	// изображения
+	bot1.RegisterImageBytesCommand("imageByte", handleImageByte)
+	bot1.RegisterImagePathCommand("imagePath", handleImagePath)
+
+	bot1.BasicAuth("imageByte")
+
+	////////////////////////////////////////////////////////////////////////////
 	// Кнопки //////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
 	bot1.RegisterButton("Кнопка 1", "button1", handleButton1, handleButton12)
 	bot2.RegisterButton("Кнопка 2", "button2", handleButton2)
 
@@ -59,7 +69,14 @@ func main() {
 	bot1.RegisterRegisterCommand("Кнопка 1")
 	// под BasicAuth ручка не отработает, если GetUser вернет false
 	bot2.BasicAuth("Кнопка 2")
-	////////////////////////////////////////////////////////////////////////////
+
+	// изображения
+	bot1.RegisterButtonImagePathCommand("Кнопка text image", "buttonImagePath", handleButtonImagePath)
+	bot1.RegisterButtonImageBytesCommand("Кнопка byte image", "buttonImageByte", handleButtonImageByte)
+
+	// вывод информации по боту
+	bot1.PrintRegisteredCommands()
+	bot2.PrintRegisteredCommands()
 
 	// Старт бота 1 и бота 2
 	go bot1.Start()
@@ -102,4 +119,30 @@ func handleButton12() string {
 
 func handleButton2() string {
 	return "Кнопка 2 была нажата."
+}
+
+func handleImageByte() []byte {
+	imageData, err := ioutil.ReadFile("./examples/t4k6licnFdc.jpg")
+	if err != nil {
+		return nil
+	}
+
+	return imageData
+}
+
+func handleImagePath() string {
+	return "./examples/t4k6licnFdc.jpg"
+}
+
+func handleButtonImageByte() []byte {
+	imageData, err := ioutil.ReadFile("./examples/t4k6licnFdc.jpg")
+	if err != nil {
+		return nil
+	}
+
+	return imageData
+}
+
+func handleButtonImagePath() string {
+	return "./examples/t4k6licnFdc.jpg"
 }

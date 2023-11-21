@@ -5,7 +5,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
-func SendImageFromBytes(bot *tgbotapi.BotAPI, chatID int64, imageData []byte, caption string) error {
+func (b *Bot) SendImageFromBytes(chatID int64, imageData []byte, caption string) error {
 	// Создаем буфер
 	var buf bytes.Buffer
 
@@ -22,14 +22,14 @@ func SendImageFromBytes(bot *tgbotapi.BotAPI, chatID int64, imageData []byte, ca
 	msg := tgbotapi.NewPhotoUpload(chatID, photoConfig)
 	msg.Caption = caption
 
-	_, err := bot.Send(msg)
+	_, err := b.bot.Send(msg)
 	return err
 }
 
-func SendImage(bot *tgbotapi.BotAPI, chatID int64, imageFilePath string, caption string) error {
+func (b *Bot) SendImage(chatID int64, imageFilePath string, caption string) error {
 	photoConfig := tgbotapi.NewPhotoUpload(chatID, imageFilePath)
 	photoConfig.Caption = caption
 
-	_, err := bot.Send(photoConfig)
+	_, err := b.bot.Send(photoConfig)
 	return err
 }
