@@ -1,9 +1,8 @@
 Canonical example
 
 <pre>
-```
 func main() {
-	// Регистрация ботов
+	`// Регистрация ботов
 	// Для примера t.me/pls_bot1_bot
 	// вторым аргументом можно передать nil, если пользователя не надо обрабатывать
 	// 5 - Количество горутин в пуле для обработки сообщений
@@ -143,5 +142,4 @@ func handleButtonImagePath() string {
 	return "./examples/t4k6licnFdc.jpg"
 }
 
-```
 </pre>
