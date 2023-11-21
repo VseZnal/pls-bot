@@ -1,9 +1,9 @@
 package main
 
 import (
+	register_bot "github.com/VseZnal/pls-bot-bot/register-bot"
 	"io/ioutil"
 	"log"
-	register_bot "pls-bot/register-bot"
 )
 
 func main() {
