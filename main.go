@@ -9,7 +9,8 @@ func main() {
 	// Регистрация ботов
 	// Для примера t.me/pls_bot1_bot
 	// вторым аргументом можно передать nil, если пользователя не надо обрабатывать
-	bot1, err := register_bot.NewBot("6935692579:AAGZY_RlQceD72lX678YO2FqkLOSig52oLc", func(username string) bool {
+	// 5 - Количество горутин в пуле для обработки сообщений
+	bot1, err := register_bot.NewBot(5, "6935692579:AAGZY_RlQceD72lX678YO2FqkLOSig52oLc", func(username string) bool {
 		// если будет возвращаться false, то ручка под BasicAuth не отработает, а ручка под RegisterRegisterCommand отработает всегда
 		success := GetUser(username)
 		return success
@@ -20,7 +21,8 @@ func main() {
 
 	// Для примера t.me/pls_bot2_bot
 	// вторым аргументом можно передать nil, если пользователя не надо обрабатывать
-	bot2, err := register_bot.NewBot("6701968897:AAGLsTyMDBHV_gf5sFxE1XOTXPSBP8kY0Ow", func(username string) bool {
+	// 5 - Количество горутин в пуле для обработки сообщений
+	bot2, err := register_bot.NewBot(5, "6701968897:AAGLsTyMDBHV_gf5sFxE1XOTXPSBP8kY0Ow", func(username string) bool {
 		success := GetUser(username)
 		// если будет возвращаться false, то ручка под BasicAuth не отработает, а ручка под RegisterRegisterCommand отработает всегда
 		return success
