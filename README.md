@@ -37,6 +37,11 @@ func main() {
 
 	// под BasicAuth ручка не отработает, если GetUser вернет false
 	bot1.BasicAuth("text1")
+    
+	// Регистрация команды start будет отправлять сообщение пользователю при первом заходе, если
+	// зарегистрированы кнопки, то команда обязательна, так как отправляет и зарегистрированные кнопки пользователю.
+	// Зарегистрировать команду возможно только используя RegisterTextCommand
+	bot2.RegisterTextCommand("start", handleStartCommand1)
 
 	// под RegisterRegisterCommand ручка отработает всегда
 	bot1.RegisterRegisterCommand("reg")

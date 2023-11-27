@@ -82,7 +82,6 @@ func (b *Bot) processUpdate(update tgbotapi.Update) {
 	if update.Message == nil {
 		return
 	}
-	sendKeyboard(b, update.Message.Chat.ID)
 
 	if update.Message.IsCommand() {
 		command := update.Message.Command()
@@ -118,16 +117,22 @@ func (b *Bot) processUpdate(update tgbotapi.Update) {
 				return
 			}
 
-			for _, textHandler := range handlers.TextHandlers {
-				messageText := textHandler()
-				if messageText != "" {
-					response := tgbotapi.NewMessage(update.Message.Chat.ID, messageText)
-					_, err := b.bot.Send(response)
-					if err != nil {
-						log.Println("Ошибка при отправке сообщения:", err)
+			if command == "start" {
+				messageText := handlers.TextHandlers[0]
+				sendKeyboard(b, update.Message.Chat.ID, messageText())
+			} else {
+				for _, textHandler := range handlers.TextHandlers {
+					messageText := textHandler()
+					if messageText != "" {
+						response := tgbotapi.NewMessage(update.Message.Chat.ID, messageText)
+						_, err := b.bot.Send(response)
+						if err != nil {
+							log.Println("Ошибка при отправке сообщения:", err)
+						}
 					}
 				}
 			}
+
 			// Обработка изображений в байтах
 			if len(handlers.ImageBytes) > 0 {
 				for _, imageHandler := range handlers.ImageBytes {

@@ -50,9 +50,9 @@ func (b *Bot) RegisterButtonImageBytesCommand(buttonText string, command string,
 	}
 }
 
-func sendKeyboard(bot *Bot, chatID int64) {
-	// Создайте клавиатуру с кнопками на основе зарегистрированных кнопок
-	msg := tgbotapi.NewMessage(chatID, "123")
+func sendKeyboard(bot *Bot, chatID int64, startMsg string) {
+	// Создаем клавиатуру с кнопками на основе зарегистрированных кнопок
+	msg := tgbotapi.NewMessage(chatID, startMsg)
 
 	if len(bot.buttons) > 0 {
 		var keyboardRows [][]tgbotapi.KeyboardButton
