@@ -18,7 +18,10 @@ type Bot struct {
 	mu                      sync.RWMutex
 	onRegisterUser          func(username string) bool // Функция, которая будет вызываться при регистрации пользователя
 	gWorkers                int                        // Количество горутин в пуле для обработки сообщений
+	userInputCallbacks      map[string]UserInputCallback
 }
+
+type UserInputCallback func(username, userInput string) string
 
 type CommandHandlers struct {
 	TextHandlers []func() string
@@ -44,6 +47,7 @@ func NewBot(gWorkers int, token string, onRegisterUser func(username string) boo
 		onRegisterUser:          onRegisterUser, // Устанавливаем функцию обратного вызова
 		buttons:                 make(map[string]CommandHandlers),
 		gWorkers:                gWorkers,
+		userInputCallbacks:      make(map[string]UserInputCallback),
 	}, nil
 }
 
@@ -129,6 +133,20 @@ func (b *Bot) processUpdate(update tgbotapi.Update) {
 						if err != nil {
 							log.Println("Ошибка при отправке сообщения:", err)
 						}
+					}
+				}
+			}
+
+			if callback, exists := b.userInputCallbacks[command]; exists {
+				username := update.Message.From.UserName
+				userInput := update.Message.Text
+
+				result := callback(username, userInput)
+				if result != "" {
+					response := tgbotapi.NewMessage(update.Message.Chat.ID, result)
+					_, err := b.bot.Send(response)
+					if err != nil {
+						log.Println("Ошибка при отправке сообщения:", err)
 					}
 				}
 			}

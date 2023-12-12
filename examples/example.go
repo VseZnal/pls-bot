@@ -64,6 +64,9 @@ func main() {
 
 	bot1.BasicAuth("imageByte")
 
+	// Регистрация команды, которая будет вызывать функцию обратного вызова
+	bot1.RegisterUserInputCommand("get_user_input", handleUserInput)
+
 	////////////////////////////////////////////////////////////////////////////
 	// Кнопки //////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////
@@ -88,6 +91,13 @@ func main() {
 	go bot2.Start()
 
 	select {}
+}
+
+// Создание функции, которая будет обрабатывать ввод пользователя
+func handleUserInput(username, userInput string) string {
+	// Здесь можно обрабатывать userInput по вашему усмотрению\
+	log.Println(userInput)
+	return username + " " + userInput
 }
 
 func handleStartCommand1() string {

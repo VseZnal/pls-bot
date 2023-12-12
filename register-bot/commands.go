@@ -62,3 +62,12 @@ func (b *Bot) isAllowedUser(username string) bool {
 	_, allowed := b.allowedUsernames[username]
 	return allowed
 }
+
+func (b *Bot) RegisterUserInputCommand(command string, callback UserInputCallback) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	b.userInputCallbacks[command] = callback
+
+	b.commandHandlers[command] = CommandHandlers{}
+}
