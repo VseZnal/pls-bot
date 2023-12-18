@@ -19,6 +19,7 @@ type Bot struct {
 	onRegisterUser          func(username string) bool // Функция, которая будет вызываться при регистрации пользователя
 	gWorkers                int                        // Количество горутин в пуле для обработки сообщений
 	userInputCallbacks      map[string]UserInputCallback
+	parseMode               string
 }
 
 type UserInputCallback func(username, userInput string) string
@@ -29,7 +30,7 @@ type CommandHandlers struct {
 	ImageBytes   []func() []byte // Для байтов изображений
 }
 
-func NewBot(gWorkers int, token string, onRegisterUser func(username string) bool) (*Bot, error) {
+func NewBot(gWorkers int, token, parseMode string, onRegisterUser func(username string) bool) (*Bot, error) {
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		return nil, err
@@ -48,6 +49,7 @@ func NewBot(gWorkers int, token string, onRegisterUser func(username string) boo
 		buttons:                 make(map[string]CommandHandlers),
 		gWorkers:                gWorkers,
 		userInputCallbacks:      make(map[string]UserInputCallback),
+		parseMode:               parseMode,
 	}, nil
 }
 
@@ -129,6 +131,9 @@ func (b *Bot) processUpdate(update tgbotapi.Update) {
 					messageText := textHandler()
 					if messageText != "" {
 						response := tgbotapi.NewMessage(update.Message.Chat.ID, messageText)
+						if b.parseMode != "" {
+							response.ParseMode = b.parseMode
+						}
 						_, err := b.bot.Send(response)
 						if err != nil {
 							log.Println("Ошибка при отправке сообщения:", err)
@@ -144,6 +149,9 @@ func (b *Bot) processUpdate(update tgbotapi.Update) {
 				result := callback(username, userInput)
 				if result != "" {
 					response := tgbotapi.NewMessage(update.Message.Chat.ID, result)
+					if b.parseMode != "" {
+						response.ParseMode = b.parseMode
+					}
 					_, err := b.bot.Send(response)
 					if err != nil {
 						log.Println("Ошибка при отправке сообщения:", err)
@@ -212,6 +220,9 @@ func (b *Bot) processUpdate(update tgbotapi.Update) {
 				messageText := textHandler()
 				if messageText != "" {
 					response := tgbotapi.NewMessage(update.Message.Chat.ID, messageText)
+					if b.parseMode != "" {
+						response.ParseMode = b.parseMode
+					}
 					_, err := b.bot.Send(response)
 					if err != nil {
 						log.Println("Ошибка при отправке сообщения:", err)
