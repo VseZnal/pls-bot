@@ -76,6 +76,9 @@ func (b *Bot) RegisterUserInputCommand(command string, callback UserInputCallbac
 
 func (b *Bot) SendMessageByChatID(chatID int64, message string) error {
 	response := tgbotapi.NewMessage(chatID, message)
+	if b.parseMode != "" {
+		response.ParseMode = b.parseMode
+	}
 	_, err := b.bot.Send(response)
 	return err
 }
