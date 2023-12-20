@@ -90,13 +90,19 @@ func main() {
 	go bot1.Start()
 	go bot2.Start()
 
+	chatIDBot1 := int64(123456789) // Замените на реальный chatID
+	err = bot1.SendMessageByChatID(chatIDBot1, "Привет от бота 1!")
+	if err != nil {
+		log.Println("Ошибка при отправке сообщения для бота 1:", err)
+	}
+
 	select {}
 }
 
 // Создание функции, которая будет обрабатывать ввод пользователя
-func handleUserInput(username, userInput string) string {
+func handleUserInput(username, userInput string, chatId int64) string {
 	// Здесь можно обрабатывать userInput по вашему усмотрению\
-	log.Println(userInput)
+	log.Println(userInput, chatId)
 	return username + " " + userInput
 }
 

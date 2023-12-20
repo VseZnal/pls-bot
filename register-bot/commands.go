@@ -1,5 +1,7 @@
 package register_bot
 
+import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+
 func (b *Bot) RegisterTextCommand(command string, textHandlers ...func() string) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -70,4 +72,10 @@ func (b *Bot) RegisterUserInputCommand(command string, callback UserInputCallbac
 	b.userInputCallbacks[command] = callback
 
 	b.commandHandlers[command] = CommandHandlers{}
+}
+
+func (b *Bot) SendMessageByChatID(chatID int64, message string) error {
+	response := tgbotapi.NewMessage(chatID, message)
+	_, err := b.bot.Send(response)
+	return err
 }

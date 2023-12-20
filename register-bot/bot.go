@@ -22,7 +22,7 @@ type Bot struct {
 	parseMode               string
 }
 
-type UserInputCallback func(username, userInput string) string
+type UserInputCallback func(username, userInput string, chatId int64) string
 
 type CommandHandlers struct {
 	TextHandlers []func() string
@@ -146,7 +146,7 @@ func (b *Bot) processUpdate(update tgbotapi.Update) {
 				username := update.Message.From.UserName
 				userInput := update.Message.Text
 
-				result := callback(username, userInput)
+				result := callback(username, userInput, update.Message.Chat.ID)
 				if result != "" {
 					response := tgbotapi.NewMessage(update.Message.Chat.ID, result)
 					if b.parseMode != "" {
